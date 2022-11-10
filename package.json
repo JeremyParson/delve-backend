@@ -1,0 +1,45 @@
+{
+  "name": "delve-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "dev": "nodemon dist/server.js",
+    "test": "jest --detectOpenHandles"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.0",
+    "@types/body-parser": "^1.19.2",
+    "@types/cors": "^2.8.12",
+    "@types/express": "^4.17.14",
+    "@types/jest": "^29.2.1",
+    "@types/jsonwebtoken": "^8.5.9",
+    "@types/node": "^18.11.6",
+    "@types/sequelize": "^4.28.14",
+    "@types/socket.io": "^3.0.2",
+    "@types/superagent": "^4.1.15",
+    "@types/supertest": "^2.0.12",
+    "dotenv": "^16.0.3",
+    "nodemon": "^2.0.20",
+    "sequelize-cli": "^6.5.1",
+    "superagent": "^8.0.3",
+    "supertest": "^6.3.1",
+    "ts-jest": "^29.0.3",
+    "typescript": "^4.8.4"
+  },
+  "dependencies": {
+    "@prisma/client": "^4.5.0",
+    "bcrypt": "^5.1.0",
+    "body-parser": "^1.20.1",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^8.5.1",
+    "prisma": "^4.5.0",
+    "socket.io": "^4.5.3"
+  }
+}

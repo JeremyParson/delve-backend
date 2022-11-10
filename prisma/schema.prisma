@@ -1,0 +1,207 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Abilities {
+  id                 Int                  @id @default(autoincrement())
+  name               String?              @db.VarChar(255)
+  i_icon             String?              @db.VarChar(255)
+  description        String?              @db.VarChar(255)
+  created_at         DateTime?            @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime?            @default(now()) @db.Timestamptz(6)
+  cooldown           Int?
+  characterAbilities CharacterAbilities[]
+  monsterAbilities   MonsterAbilities[]
+}
+
+model CharacterAbilities {
+  id          Int         @id @default(autoincrement())
+  abilityId   Int?
+  characterid Int?
+  created_at  DateTime?   @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime?   @default(now()) @db.Timestamptz(6)
+  cooldown    Int?
+  abilities   Abilities?  @relation(fields: [abilityId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  characters  Characters? @relation(fields: [characterid], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "CharacterAbilities_characterId_fkey")
+}
+
+model CharacterItems {
+  id          Int         @id @default(autoincrement())
+  itemId      Int?
+  characterId Int?
+  slot        Int?
+  created_at  DateTime?   @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime?   @default(now()) @db.Timestamptz(6)
+  characters  Characters? @relation(fields: [characterId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  items       Items?      @relation(fields: [itemId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model Characters {
+  id                                 Int                  @id @default(autoincrement())
+  item_left                          Int?
+  item_right                         Int?
+  item_head                          Int?
+  item_body                          Int?
+  item_feet                          Int?
+  name                               String?              @db.VarChar(255)
+  i_token                            String?              @db.VarChar(255)
+  health                             Int?
+  mana                               Int?
+  level                              Int?
+  experience                         Int?
+  position_x                         Int?
+  position_y                         Int?
+  strength                           Int?
+  agility                            Int?
+  arcana                             Int?
+  grit                               Int?
+  userid                             Int?
+  created_at                         DateTime?            @default(now()) @db.Timestamptz(6)
+  updated_at                         DateTime?            @default(now()) @db.Timestamptz(6)
+  items_Characters_item_bodyToItems  Items?               @relation("Characters_item_bodyToItems", fields: [item_body], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  items_Characters_item_feetToItems  Items?               @relation("Characters_item_feetToItems", fields: [item_feet], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  items_Characters_item_headToItems  Items?               @relation("Characters_item_headToItems", fields: [item_head], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  items_Characters_item_leftToItems  Items?               @relation("Characters_item_leftToItems", fields: [item_left], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  items_Characters_item_rightToItems Items?               @relation("Characters_item_rightToItems", fields: [item_right], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                              Users?               @relation(fields: [userid], references: [id], onDelete: Cascade)
+  characterAbilities                 CharacterAbilities[]
+  characterItems                     CharacterItems[]
+}
+
+model GameMonsters {
+  id         Int       @id @default(autoincrement())
+  monsterId  Int?
+  gameId     Int?
+  health     Int?
+  mana       Int?
+  position_x Int?
+  position_y Int?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+  games      Games?    @relation(fields: [gameId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "CharacterItems_gameId_fkey")
+  monsters   Monsters? @relation(fields: [monsterId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "CharacterItems_monsterId_fkey")
+}
+
+model GameUsers {
+  id         Int       @id @default(autoincrement())
+  gameId     Int?
+  userId     Int?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+  games      Games?    @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  users      Users?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Games {
+  id           Int            @id @default(autoincrement())
+  game_name    String?        @db.VarChar(255)
+  layer        String?        @db.VarChar(255)
+  difficulty   Int?
+  created_at   DateTime?      @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime?      @default(now()) @db.Timestamptz(6)
+  gameMonsters GameMonsters[]
+  gameUsers    GameUsers[]
+  lobbies      Lobbies[]
+}
+
+model Items {
+  id                                      Int              @id @default(autoincrement())
+  name                                    String?          @db.VarChar(255)
+  i_icon                                  String?          @db.VarChar(255)
+  description                             String?          @db.VarChar(255)
+  components                              String?          @db.VarChar(255)
+  created_at                              DateTime?        @default(now()) @db.Timestamptz(6)
+  updated_at                              DateTime?        @default(now()) @db.Timestamptz(6)
+  CharacterItems                          CharacterItems[]
+  characters_Characters_item_bodyToItems  Characters[]     @relation("Characters_item_bodyToItems")
+  characters_Characters_item_feetToItems  Characters[]     @relation("Characters_item_feetToItems")
+  characters_Characters_item_headToItems  Characters[]     @relation("Characters_item_headToItems")
+  characters_Characters_item_leftToItems  Characters[]     @relation("Characters_item_leftToItems")
+  characters_Characters_item_rightToItems Characters[]     @relation("Characters_item_rightToItems")
+  monsters_ItemsToMonsters_item_body      Monsters[]       @relation("ItemsToMonsters_item_body")
+  monsters_ItemsToMonsters_item_feet      Monsters[]       @relation("ItemsToMonsters_item_feet")
+  monsters_ItemsToMonsters_item_head      Monsters[]       @relation("ItemsToMonsters_item_head")
+  monsters_ItemsToMonsters_item_left      Monsters[]       @relation("ItemsToMonsters_item_left")
+  monsters_ItemsToMonsters_item_right     Monsters[]       @relation("ItemsToMonsters_item_right")
+}
+
+model Lobbies {
+  id          Int           @id @default(autoincrement())
+  game        Int?
+  lobby_name  String?       @db.VarChar(255)
+  is_public   Boolean?
+  created_at  DateTime?     @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime?     @default(now()) @db.Timestamptz(6)
+  games       Games?        @relation(fields: [game], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  userLobbies UserLobbies[]
+}
+
+model MonsterAbilities {
+  id         Int        @id @default(autoincrement())
+  abilityId  Int?
+  monsterId  Int?
+  created_at DateTime?  @default(now()) @db.Timestamptz(6)
+  updated_at DateTime?  @default(now()) @db.Timestamptz(6)
+  abilities  Abilities? @relation(fields: [abilityId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  monsters   Monsters?  @relation(fields: [monsterId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model Monsters {
+  id                               Int                @id @default(autoincrement())
+  item_left                        Int?
+  item_right                       Int?
+  item_head                        Int?
+  item_body                        Int?
+  item_feet                        Int?
+  name                             String?            @db.VarChar(255)
+  i_token                          String?            @db.VarChar(255)
+  health                           Int?
+  mana                             Int?
+  level                            Int?
+  experience                       Int?
+  strength                         Int?
+  agility                          Int?
+  arcana                           Int?
+  grit                             Int?
+  created_at                       DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at                       DateTime?          @default(now()) @db.Timestamptz(6)
+  items_ItemsToMonsters_item_body  Items?             @relation("ItemsToMonsters_item_body", fields: [item_body], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  items_ItemsToMonsters_item_feet  Items?             @relation("ItemsToMonsters_item_feet", fields: [item_feet], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  items_ItemsToMonsters_item_head  Items?             @relation("ItemsToMonsters_item_head", fields: [item_head], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  items_ItemsToMonsters_item_left  Items?             @relation("ItemsToMonsters_item_left", fields: [item_left], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  items_ItemsToMonsters_item_right Items?             @relation("ItemsToMonsters_item_right", fields: [item_right], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  gameMonsters                     GameMonsters[]
+  monsterAbilities                 MonsterAbilities[]
+}
+
+model SequelizeMeta {
+  name String @id @db.VarChar(255)
+}
+
+model UserLobbies {
+  id         Int       @id @default(autoincrement())
+  userId     Int?
+  lobbyId    Int?
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+  lobbies    Lobbies?  @relation(fields: [lobbyId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      Users?    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model Users {
+  id              Int           @id @default(autoincrement())
+  username        String?       @db.VarChar(255)
+  email           String?       @db.VarChar(255)
+  password_digest String?       @db.VarChar(255)
+  role            String?       @db.VarChar(255)
+  created_at      DateTime?     @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime?     @default(now()) @db.Timestamptz(6)
+  characters      Characters[]
+  gameUsers       GameUsers[]
+  userLobbies     UserLobbies[]
+}

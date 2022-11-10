@@ -1,0 +1,9 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+# keep distribution versions out of version control
+dist
+
+# dont need .vscode in repository
+.vscode
