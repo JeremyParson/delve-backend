@@ -40,7 +40,5 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - run: npm ci
-      - run: npm i typescript -g
-      - run: npm i tsc -g
       - run: npm run build
       - run: npm run migrate deploy
