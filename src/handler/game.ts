@@ -45,8 +45,6 @@ export default function registerGameHandlers(io: Server, socket: Socket) {
         gameUsers: {
           create: {
             gameId: Number(payload.gameId),
-            createdAt: new Date(Date.now()),
-            updatedAt: new Date(Date.now()),
           },
         },
       },

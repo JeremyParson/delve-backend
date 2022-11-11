@@ -1,6 +1,5 @@
 import { Characters, Prisma, PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from ".";
 
 async function index(): Promise<Characters[]> {
   const characters = await prisma.characters.findMany();

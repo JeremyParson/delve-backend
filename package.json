@@ -4,8 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "dev": "nodemon dist/server.js",
-    "test": "jest --detectOpenHandles"
+    "dev": "set NODE_ENV=development&& nodemon dist/server.js",
+    "test": "set NODE_ENV=testing&& jest"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"

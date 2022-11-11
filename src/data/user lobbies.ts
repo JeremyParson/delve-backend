@@ -1,6 +1,5 @@
 import { UserLobbies, Prisma, PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from ".";
 
 async function index(): Promise<UserLobbies[]> {
   const userLobbies = await prisma.userLobbies.findMany();
