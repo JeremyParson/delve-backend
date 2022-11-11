@@ -1,6 +1,9 @@
 name: test-app-with-Jest
 run-name: ${{ github.actor }} is testing the application
 on: [push]
+
+env:
+  TESTING_DATABASE_URL:postgresql: //postgres:postgres@aa1iyfo4pj9uyvb.cfwfsl2iqz2h.us-east-1.rds.amazonaws.com:5432/delve_test?schema=public
 jobs:
   run-tests:
     runs-on: ubuntu-latest
