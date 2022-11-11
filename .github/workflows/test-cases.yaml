@@ -1,19 +1,24 @@
 name: test-app-with-Jest
 run-name: ${{ github.actor }} is testing the application
 on: [push]
-
-env:
-  TESTING_DATABASE_URL:postgresql: //postgres:postgres@aa1iyfo4pj9uyvb.cfwfsl2iqz2h.us-east-1.rds.amazonaws.com:5432/delve_test?schema=public
 jobs:
   run-tests:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres,
+          POSTGRES_PASSWORD: postgres,
+        ports:
+          - 5432:5432
     env:
-      NODE_ENV: testing
-      TESTING_DATABASE_URL: ${{secrets.TESTING_DATABASE_URL}}
+      DATABASE_URL: ${{secrets.TESTING_DATABASE_URL}}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '14'
       - run: npm ci
+      - run: npx prisma db push
       - run: npx jest
