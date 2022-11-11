@@ -7,10 +7,13 @@ env:
 jobs:
   run-tests:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: testing
+      TESTING_DATABASE_URL: ${{secrets.TESTING_DATABASE_URL}}
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: '14'
       - run: npm ci
-      - run: npm run test
+      - run: npx jest
