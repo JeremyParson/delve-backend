@@ -29,4 +29,5 @@ jobs:
           node-version: '14'
       - run: npm ci
       - run: npx prisma db push
+      - run: npx prisma db seed
       - run: npx jest
