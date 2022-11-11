@@ -18,7 +18,7 @@ jobs:
         ports:
           - 5432:5432
     env:
-      DATABASE_URL: postgresql://root:@localhost:5432/delve
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/delve
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
