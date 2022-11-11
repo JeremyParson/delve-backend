@@ -1,6 +1,5 @@
 import { GameUsers, Prisma, PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from ".";
 
 async function index(): Promise<GameUsers[]> {
   const gameUsers = await prisma.gameUsers.findMany();

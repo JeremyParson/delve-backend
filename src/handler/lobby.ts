@@ -56,8 +56,6 @@ export default function registerLobbyHandlers(io: Server, socket: Socket) {
         userLobbies: {
           create: {
             lobbyId: Number(payload.lobbyId),
-            createdAt: new Date(Date.now()),
-            updatedAt: new Date(Date.now()),
           },
         },
       },
