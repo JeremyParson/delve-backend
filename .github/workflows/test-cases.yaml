@@ -52,12 +52,12 @@ jobs:
       - name: Get directory layout
         run: dir
       - name: Copy schema to build folder
-        run: cp /prisma/schema.prisma /dist/prisma
+        run: cp ./prisma/schema.prisma ./dist/prisma
       - name: Copy configuration to build folder
-        run: cp package.json /dist
-      - run: cp package-lock.json /dist
+        run: cp package.json ./dist
+      - run: cp package-lock.json ./dist
       - name: Create artifact
-        run: zip -r artifact.zip /dist
+        run: zip -r artifact.zip ./dist
       - name: Beanstalk Deploy
         uses: einaregilsson/beanstalk-deploy@v20
         with:
