@@ -27,37 +27,37 @@ jobs:
       IO_PORT: 8001
     steps:
       - name: Checkout repository
-      - uses: actions/checkout@v3
+        uses: actions/checkout@v3
       - name: Setup node
-      - uses: actions/setup-node@v3
+        uses: actions/setup-node@v3
         with:
           node-version: '14'
       - name: Clean install dependencies
-      - run: npm ci
+        run: npm ci
       - name: Push schema to database
-      - run: npm run db:push
+        run: npm run db:push
       - name: Seed database
-      - run: npm run db:seed
+        run: npm run db:seed
       - name: Run tests
-      - run: npm run test
+        run: npm run test
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-      - uses: actions/checkout@v3
+        uses: actions/checkout@v3
       - name: Clean install dependencies
-      - run: npm ci
+        run: npm ci
       - name: Build application
-      - run: npm run build
+        run: npm run build
       - name: Copy schema to build folder
-      - run: cp /prisma/schema.prisma /dist/prisma
+        run: cp /prisma/schema.prisma /dist/prisma
       - name: Copy configuration to build folder
-      - run: cp package.json /dist
+        run: cp package.json /dist
       - run: cp package-lock.json /dist
       - name: Create artifact
-      - run: zip -r artifact.zip /dist
+        run: zip -r artifact.zip /dist
       - name: Beanstalk Deploy
-      - uses: einaregilsson/beanstalk-deploy@v20
+        uses: einaregilsson/beanstalk-deploy@v20
         with:
           aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
