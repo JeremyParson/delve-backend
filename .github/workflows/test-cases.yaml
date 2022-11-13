@@ -50,7 +50,7 @@ jobs:
       - name: Build application
         run: npm run build
       - name: Get directory layout
-      - run: dir
+        run: dir
       - name: Copy schema to build folder
         run: cp /prisma/schema.prisma /dist/prisma
       - name: Copy configuration to build folder
