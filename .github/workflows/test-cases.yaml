@@ -49,13 +49,15 @@ jobs:
         run: npm ci
       - name: Build application
         run: npm run build
+      - name: Get directory layout
+      - run: dir
       - name: Copy schema to build folder
-        run: cp /delve-backend/prisma/schema.prisma /delve-backend/dist/prisma
+        run: cp /prisma/schema.prisma /dist/prisma
       - name: Copy configuration to build folder
-        run: cp package.json /delve-backend/dist
-      - run: cp package-lock.json /delve-backend/dist
+        run: cp package.json /dist
+      - run: cp package-lock.json /dist
       - name: Create artifact
-        run: zip -r artifact.zip /delve-backend/dist
+        run: zip -r artifact.zip /dist
       - name: Beanstalk Deploy
         uses: einaregilsson/beanstalk-deploy@v20
         with:
@@ -65,4 +67,4 @@ jobs:
           environment_name: delve-app-environment
           version_label: 0.1
           region: us-east-1
-          deployment_package: /delve-backend/artifact.zip
+          deployment_package: artifact.zip
