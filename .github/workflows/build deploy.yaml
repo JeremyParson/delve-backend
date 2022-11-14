@@ -1,0 +1,44 @@
+name: build-and-deploy
+run-name: Build and Deploy started by ${{ github.actor }}
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Build application
+        run: npm run build
+      - name: Copy schema to build folder
+      - name: Copy configurations and schema to build folder
+        run: |
+          cp ./prisma/schema.prisma ./dist/prisma
+          cp package-lock.json ./dist
+          cp package.json ./dist
+          cp .npmrc ./dist
+      - name: Create artifact
+        run: zip -r artifact.zip ./dist
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifact
+          path: artifact.zip
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download production artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: artifact
+      - name: Beanstalk Deploy
+        uses: einaregilsson/beanstalk-deploy@v20
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          application_name: Delve app
+          environment_name: Delve-app-env
+          region: us-east-1
+          deployment_package: artifact.zip
