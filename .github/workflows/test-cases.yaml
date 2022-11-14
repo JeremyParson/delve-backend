@@ -65,6 +65,5 @@ jobs:
           aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           application_name: Delve app
           environment_name: Delve-app-env
-          version_label: 0.1
           region: us-east-1
           deployment_package: artifact.zip
