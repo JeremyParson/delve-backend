@@ -44,3 +44,4 @@ jobs:
           environment_name: Delve-app-env
           region: us-east-1
           deployment_package: artifact.zip
+          version_label: ${{ secrets.version }}
