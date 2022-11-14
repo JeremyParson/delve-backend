@@ -12,7 +12,6 @@ jobs:
         uses: actions/checkout@v3
       - name: Build application
         run: npm run build
-      - name: Copy schema to build folder
       - name: Copy configurations and schema to build folder
         run: |
           cp ./prisma/schema.prisma ./dist/prisma
