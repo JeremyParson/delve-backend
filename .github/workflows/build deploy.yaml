@@ -13,10 +13,11 @@ jobs:
       - name: Build application
         run: npm run build
       - name: Copy configurations and schema to build folder
-      - run: cp ./prisma/schema.prisma ./dist/prisma
-      - run: cp package-lock.json ./dist
-      - run: cp package.json ./dist
-      - run: cp .npmrc ./dist
+        run: |
+          cp ./prisma/schema.prisma ./dist/prisma
+          cp package-lock.json ./dist
+          cp package.json ./dist
+          cp .npmrc ./dist
       - name: Create artifact
         run: zip -r artifact.zip ./dist
       - name: Upload artifact
