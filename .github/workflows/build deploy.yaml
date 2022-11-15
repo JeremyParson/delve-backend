@@ -16,6 +16,7 @@ jobs:
         run: npm run build
       - name: Copy configurations and schema to build folder
         run: |
+          mkdir ./dist/prisma/
           cp ./prisma/schema.prisma ./dist/prisma/
           cp package-lock.json ./dist
           cp package.json ./dist
