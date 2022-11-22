@@ -61,6 +61,7 @@ model Characters {
   arcana                             Int?
   grit                               Int?
   userid                             Int?
+  gameId                             Int?
   created_at                         DateTime?            @default(now()) @db.Timestamptz(6)
   updated_at                         DateTime?            @default(now()) @db.Timestamptz(6)
   items_Characters_item_bodyToItems  Items?               @relation("Characters_item_bodyToItems", fields: [item_body], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -69,6 +70,7 @@ model Characters {
   items_Characters_item_leftToItems  Items?               @relation("Characters_item_leftToItems", fields: [item_left], references: [id], onDelete: NoAction, onUpdate: NoAction)
   items_Characters_item_rightToItems Items?               @relation("Characters_item_rightToItems", fields: [item_right], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users                              Users?               @relation(fields: [userid], references: [id], onDelete: Cascade)
+  games                              Games?               @relation(fields: [gameId], references: [id], onDelete: Cascade)
   characterAbilities                 CharacterAbilities[]
   characterItems                     CharacterItems[]
 }
@@ -107,6 +109,7 @@ model Games {
   gameMonsters GameMonsters[]
   gameUsers    GameUsers[]
   lobbies      Lobbies[]
+  characters   Characters[]
 }
 
 model Items {

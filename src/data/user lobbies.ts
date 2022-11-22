@@ -1,19 +1,25 @@
 import { UserLobbies, Prisma, PrismaClient } from "@prisma/client";
 import prisma from ".";
 
-async function index(): Promise<UserLobbies[]> {
-  const userLobbies = await prisma.userLobbies.findMany();
+async function index(
+  where: Prisma.UserLobbiesWhereInput = {}
+): Promise<UserLobbies[]> {
+  const userLobbies = await prisma.userLobbies.findMany({ where });
   return userLobbies;
 }
 
-async function detail(where: Prisma.UserLobbiesWhereInput={}): Promise<UserLobbies> {
+async function detail(
+  where: Prisma.UserLobbiesWhereInput = {}
+): Promise<UserLobbies> {
   const userLobby = await prisma.userLobbies.findFirst({
-    where
+    where,
   });
   return userLobby;
 }
 
-async function create(payload: Prisma.UserLobbiesCreateInput): Promise<UserLobbies> {
+async function create(
+  payload: Prisma.UserLobbiesCreateInput
+): Promise<UserLobbies> {
   const userLobby = await prisma.userLobbies.create({
     data: payload,
   });
@@ -23,7 +29,7 @@ async function create(payload: Prisma.UserLobbiesCreateInput): Promise<UserLobbi
 async function update(index: number, payload: Prisma.UserLobbiesUpdateInput) {
   const userLobby = await prisma.userLobbies.update({
     where: {
-      id: index
+      id: index,
     },
     data: payload,
   });
