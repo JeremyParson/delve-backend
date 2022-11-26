@@ -1,6 +1,16 @@
 export {};
 
+declare module 'socket.io' {
+    interface Socket {
+      user: User;
+    }
+}
 declare global {
+  type User = {
+    role: string;
+    id: number;
+    username: string;
+  };
   namespace NodeJS {
     interface ProcessEnv {
       DATABASE_URL: string;
@@ -14,11 +24,5 @@ declare global {
     export interface Request {
       currentUser: User;
     }
-
-    type User = {
-      role: string;
-      id: number;
-      username: string;
-    };
   }
 }

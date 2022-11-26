@@ -1,8 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { Server, Socket } from "socket.io";
-import Characters from "src/data/characters";
+import Characters from "../data/characters";
 import Games from "../data/games";
 import { generateMap } from "../game/game logic";
+import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 const maps = new Map();
@@ -31,20 +32,20 @@ type ActionPayload = {
   targets: [{ id: number; actorType: string }];
 };
 
-export default function registerGameHandlers(io: Server, socket: Socket) {
-  const generateNextLayer = async (payload: Payload) => {
+export default function registerGameHandlers(io: Server) {
+  const generateNextLayer = async (_socket: Socket, payload: Payload) => {
     const game = await Games.detail({ id: payload.gameId });
     const map = generateMap(game.id, Number(game.layer));
     maps.set(game.id, map);
-  }
+  };
 
-  const leaveGame = async (payload: Payload) => {
+  const leaveGame = async (socket: Socket, payload: Payload) => {
     const strGameId = String(payload.gameId);
-    const strUserId = String(payload.userId);
+    const strUserId = String(socket.user.id);
     if (socket.rooms.has(strGameId)) {
       await prisma.gameUsers.deleteMany({
         where: {
-          userId: payload.userId,
+          userId: socket.user.id,
           gameId: payload.gameId,
         },
       });
@@ -53,7 +54,7 @@ export default function registerGameHandlers(io: Server, socket: Socket) {
     }
   };
 
-  const joinGame = async (payload: Payload) => {
+  const joinGame = async (socket: Socket, payload: Payload) => {
     const game = await prisma.lobbies.findFirst({
       where: {
         id: Number(payload.gameId),
@@ -62,7 +63,7 @@ export default function registerGameHandlers(io: Server, socket: Socket) {
 
     prisma.users.update({
       where: {
-        id: Number(payload.userId),
+        id: Number(socket.user.id),
       },
       data: {
         gameUsers: {
@@ -78,10 +79,10 @@ export default function registerGameHandlers(io: Server, socket: Socket) {
     socket.join(strGameId);
   };
 
-  const sendMessage = (payload: MessagePayload) => {
+  const sendMessage = (socket: Socket, payload: MessagePayload) => {
     const userGame = prisma.gameUsers.findFirst({
       where: {
-        userId: payload.userId,
+        userId: socket.user.id,
         gameId: payload.gameId,
       },
     });
@@ -90,9 +91,9 @@ export default function registerGameHandlers(io: Server, socket: Socket) {
     socket.to(strGameId).emit("game:deliver_message", payload);
   };
 
-  const moveCharacter = async (payload: MovePayload) => {
+  const moveCharacter = async (socket: Socket, payload: MovePayload) => {
     const character = await Characters.detail({ id: payload.characterId });
-    if (payload.userId !== character.userid) return;
+    if (socket.user.id !== character.userid) return;
     await Characters.update(character.id, {
       position_x: payload.position[0],
       position_y: payload.position[1],
@@ -104,8 +105,17 @@ export default function registerGameHandlers(io: Server, socket: Socket) {
     });
   };
 
-  socket.on("game:move_character", moveCharacter);
-  socket.on("game:join", joinGame);
-  socket.on("game:leave", leaveGame);
-  socket.on("game:send_message", sendMessage);
-}
+  io.use(async (socket, next) => {
+    const isAuthentic = jwt.verify(socket.handshake.auth.token, process.env.JWT_SECRET);
+    if (isAuthentic) {
+      next()
+    } else {
+      next(new Error("Authentication failed."))
+    }
+  });
+  io.on("game:join", joinGame);
+  io.on("game:leave", leaveGame);
+  io.on("game:generate_next_layer", generateNextLayer);
+  io.on("game:move_character", moveCharacter);
+  io.on("game:send_message", sendMessage);
+};

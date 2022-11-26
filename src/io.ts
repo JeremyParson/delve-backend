@@ -1,5 +1,6 @@
 import { Server, Socket } from "socket.io";
 import http from "http";
+import registerUserHandler from "./handler/user";
 import registerLobbyHandlers from "./handler/lobby";
 import registerGameHandlers from "./handler/game";
 import { Application } from "express";
@@ -13,12 +14,10 @@ export default function (app: Application): Server<DefaultEventsMap, DefaultEven
       methods: ["GET", "POST"],
     },
   });
-
-  const onConnection = (socket: Socket) => {
+  registerUserHandler(io);
+  io.on("connect", (socket) => {
     registerLobbyHandlers(io, socket);
-    registerGameHandlers(io, socket);
-  };
-
-  io.on("connection", onConnection);
+  });
+  // registerGameHandlers(io);
   return io;
 }

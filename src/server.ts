@@ -1,6 +1,5 @@
 import app from "./app";
 import setupIO from "./io";
-import http from "http";
 
 const server = setupIO(app);
 const port = Number(process.env.IO_PORT);
