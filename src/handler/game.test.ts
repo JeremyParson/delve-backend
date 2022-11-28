@@ -1,29 +1,46 @@
-import express from "express";
-import { Server } from "socket.io";
 import { io as Client, Socket } from "socket.io-client";
-import { DefaultEventsMap } from "socket.io/dist/typed-events";
+import request from "supertest";
+import app from "../app";
 import setupIO from "../io";
 import Users from "../data/user";
 import Games from "../data/games";
 import GameUsers from "../data/game users";
 import Characters from "../data/characters";
-import characters from "../data/characters";
 
 describe("Game handler", () => {
-  let server: Server<DefaultEventsMap, DefaultEventsMap, DefaultEventsMap, any>;
+
+  const ioServer = setupIO(app);
+  const expressServer = app.listen(process.env.PORT);
+  ioServer.listen(Number(process.env.IO_PORT));
   let socket: Socket;
-  beforeAll((done) => {
-    const APP = express();
-    const PORT = Number(process.env.IO_PORT);
-    server = setupIO(APP);
-    server.listen(PORT);
-    socket = Client(`http://localhost:${PORT}`);
-    socket.on("connect", done);
+  let user: any;
+  let game: any;
+  let token: string;
+
+  beforeAll(async () => {
+    user = await Users.detail({ id: 1 });
+    game = await Games.detail();
+    const response = await request(app).post("/api/v1/authentication").send({
+      email: "jsbparson@gmail.com",
+      password: "qwerty123",
+    });
+    token = response.body.token;
+  });
+
+  beforeEach((done) => {
+    try {
+      socket = Client(`http://localhost:${process.env.IO_PORT}`, {
+        auth: {
+          token,
+        },
+      });
+      socket.on("connect", () => done());
+    } catch (e) {
+      throw Error("Could not connect to server.");
+    }
   });
 
   it("joins a game", async () => {
-    const user = await Users.detail();
-    const game = await Games.detail();
     socket.on("game:user_joined", async () => {
       const gameUser = await GameUsers.detail({
         userId: user.id,
@@ -40,8 +57,6 @@ describe("Game handler", () => {
   });
 
   it("leaves a game", async () => {
-    const user = await Users.detail();
-    const game = await Games.detail();
 
     socket.on("game:user_joined", async () => {
       socket.emit("game:leave", {
@@ -65,8 +80,6 @@ describe("Game handler", () => {
   });
 
   it("sends a message", async () => {
-    const user = await Users.detail();
-    const game = await Games.detail();
     socket.on("deliver_message", (payload) => {
       expect(payload.message).toBe("Hello World");
     });
@@ -105,8 +118,13 @@ describe("Game handler", () => {
     });
   });
 
-  afterAll(() => {
+  afterEach(() => {
     socket.disconnect();
-    server.close();
+  })
+
+  afterAll(() => {
+    
+    ioServer.close();
+    expressServer.close();
   });
 });
