@@ -11,45 +11,43 @@ import request from "supertest";
 
 describe("Lobby handler", () => {
   const ioServer = setupIO(app);
-  const expressServer = app.listen(process.env.PORT)
+  const expressServer = app.listen(process.env.PORT);
   ioServer.listen(Number(process.env.IO_PORT));
   let socket: Socket;
-  let user: any
-  let lobby: any
+  let user: any;
+  let lobby: any;
+  let token: string;
 
   beforeAll(async () => {
-    const connectSocket = async (token: string) => {
-      return new Promise((res, rej) => {
-        try {
-          socket = Client(`http://localhost:${process.env.IO_PORT}`, {
-            auth: {
-              token,
-            },
-          });
-          socket.on("connect", () => res(true));
-        } catch (e) {
-          rej(e);
-        }
-      });
-    };
-    user = await Users.detail();
+    user = await Users.detail({ id: 1 });
     lobby = await Lobbies.detail();
     const response = await request(app).post("/api/v1/authentication").send({
       email: "jsbparson@gmail.com",
       password: "qwerty123",
     });
-    await connectSocket(response.body.token);
+    token = response.body.token;
+  });
+
+  beforeEach((done) => {
+    try {
+      socket = Client(`http://localhost:${process.env.IO_PORT}`, {
+        auth: {
+          token,
+        },
+      });
+      socket.on("connect", () => done());
+    } catch (e) {
+      throw Error("Could not connect to server.");
+    }
   });
 
   it("joins a lobby", (done) => {
     socket.on("lobby:user_joined", async () => {
-      console.log("A user joined")
       const lobbyUser = await UserLobbies.detail({
-        userId: user.id,
         lobbyId: lobby.id,
+        userId: user.id,
       });
       expect(lobbyUser).toBeTruthy();
-      await UserLobbies.delete(lobbyUser.id);
       done();
     });
 
@@ -60,10 +58,8 @@ describe("Lobby handler", () => {
   });
 
   it("leaves a lobby", (done) => {
-
     socket.on("lobby:user_joined", async () => {
       socket.emit("lobby:leave", {
-        userId: user.id,
         lobbyId: lobby.id,
       });
     });
@@ -104,32 +100,47 @@ describe("Lobby handler", () => {
   });
 
   it("starts a game", (done) => {
+    socket.on("lobby:user_left", async () => {
+      console.log("HUH");
+    });
+
     socket.on("lobby:game_starting", async (payload) => {
+      console.log("Game started");
       const gameUser = await GameUser.detail({
         gameId: payload.gameId,
         userId: user.id,
       });
       expect(gameUser).toBeTruthy();
+      console.log("Game user exists");
       await GameUser.delete(gameUser.id);
       await Games.delete(payload.gameId);
       done();
     });
 
-    socket.on("lobby:user_joined", () => {
+    socket.on("lobby:user_joined", async (payload) => {
+      console.log("User Joined", payload);
+      const userLobby = await UserLobbies.detail({
+        userId: user.id,
+        lobbyId: lobby.id,
+      });
+      expect(userLobby).toBeTruthy();
+      console.log("Starting game...");
       socket.emit("lobby:start_game", {
         lobbyId: lobby.id,
-        userId: user.id,
       });
     });
 
+    console.log("Joining...");
     socket.emit("lobby:join", {
       lobbyId: lobby.id,
-      userId: user.id,
     });
   });
 
-  afterAll(() => {
+  afterEach(() => {
     socket.disconnect();
+  })
+
+  afterAll(() => {
     ioServer.close();
     expressServer.close();
   });

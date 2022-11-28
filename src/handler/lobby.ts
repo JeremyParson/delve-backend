@@ -27,11 +27,16 @@ type StartGamePayload = {
 
 export default function registerLobbyHandlers(io: Server, socket: Socket) {
   const leaveAllLobbies = (reason: any) => {
-    socket.rooms.forEach((room) => {
-      if (socket.id != room) {
-        socket.leave(room);
-        socket.to(room).emit("lobby:user_left");
-      }
+    console.log("A user disconnected...");
+    socket.rooms.forEach(async (room) => {
+      if (socket.id == room) return;
+      console.log("leaving", room);
+      await prisma.userLobbies.deleteMany({
+        where: {
+          userId: socket.user.id,
+          lobbyId: Number(room),
+        },
+      });
     });
   };
 
@@ -53,23 +58,27 @@ export default function registerLobbyHandlers(io: Server, socket: Socket) {
     const lobby = await Lobbies.detail({
       id: Number(payload.lobbyId),
     });
-
-    await Users.update(Number(socket.user.id), {
-      userLobbies: {
-        create: {
-          lobbyId: Number(payload.lobbyId),
-        },
-      },
-    });
-
     if (!lobby) return;
+
+    const userLobby = await UserLobbies.create({
+      users: {
+        connect: {
+          id: socket.user.id
+        }
+      },
+      lobbies: {
+        connect: {
+          id: lobby.id
+        }
+      }
+    })
+
     const strLobbyId = String(payload.lobbyId);
     socket.join(strLobbyId);
-    io.to(strLobbyId).emit("lobby:user_joined");
+    io.to(strLobbyId).emit("lobby:user_joined", {userLobby});
   };
 
   const sendMessage = async (payload: MessagePayload) => {
-    console.log("Message sending", payload)
     const userLobby = await UserLobbies.detail({
       userId: socket.user.id,
       lobbyId: payload.lobbyId,
@@ -86,11 +95,11 @@ export default function registerLobbyHandlers(io: Server, socket: Socket) {
 
     const game = await Games.create({});
 
-    for (let user of userLobbies) {
-      await GameUsers.create({
+    for (let userLobby of userLobbies) {
+      const gameUser = await GameUsers.create({
         users: {
           connect: {
-            id: user.id,
+            id: userLobby.userId,
           },
         },
         games: {
@@ -100,7 +109,6 @@ export default function registerLobbyHandlers(io: Server, socket: Socket) {
         },
       });
     }
-    console.log("Game Users created")
     const strLobbyId = String(payload.lobbyId);
     io.to(strLobbyId).emit("lobby:game_starting", {
       gameId: game.id,
