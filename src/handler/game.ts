@@ -4,17 +4,16 @@ import Characters from "../data/characters";
 import Games from "../data/games";
 import { generateMap } from "../game/game logic";
 import jwt from "jsonwebtoken";
+import GameUsers from "../data/game users";
 
 const prisma = new PrismaClient();
 const maps = new Map();
 
 type Payload = {
-  userId: number;
   gameId: number;
 };
 
 type MessagePayload = {
-  userId: number;
   gameId: number;
   message: string;
 };
@@ -32,14 +31,14 @@ type ActionPayload = {
   targets: [{ id: number; actorType: string }];
 };
 
-export default function registerGameHandlers(io: Server) {
-  const generateNextLayer = async (_socket: Socket, payload: Payload) => {
+export default function registerGameHandlers(io: Server, socket: Socket) {
+  const generateNextLayer = async (payload: Payload) => {
     const game = await Games.detail({ id: payload.gameId });
     const map = generateMap(game.id, Number(game.layer));
     maps.set(game.id, map);
   };
 
-  const leaveGame = async (socket: Socket, payload: Payload) => {
+  const leaveGame = async (payload: Payload) => {
     const strGameId = String(payload.gameId);
     const strUserId = String(socket.user.id);
     if (socket.rooms.has(strGameId)) {
@@ -50,48 +49,51 @@ export default function registerGameHandlers(io: Server) {
         },
       });
       socket.rooms.delete(strGameId);
-      socket.to(strUserId).emit("game:user_left");
+      io.to(strUserId).emit("game:user_left");
     }
   };
 
-  const joinGame = async (socket: Socket, payload: Payload) => {
-    const game = await prisma.lobbies.findFirst({
+  const joinGame = async (payload: Payload) => {
+    const game = await prisma.games.findFirst({
       where: {
         id: Number(payload.gameId),
       },
     });
-
-    prisma.users.update({
-      where: {
-        id: Number(socket.user.id),
-      },
-      data: {
-        gameUsers: {
-          create: {
-            gameId: Number(payload.gameId),
-          },
-        },
-      },
-    });
     if (!game) return;
+
+    await GameUsers.create({
+      games: {
+        connect: {
+          id: payload.gameId
+        }
+      },
+      users: {
+        connect: {
+          id: socket.user.id
+        }
+      }
+    });
+    
     const strGameId = String(payload.gameId);
-    socket.to(strGameId).emit("game:user_joined");
     socket.join(strGameId);
+    io.to(strGameId).emit("game:user_joined");
   };
 
-  const sendMessage = (socket: Socket, payload: MessagePayload) => {
-    const userGame = prisma.gameUsers.findFirst({
+  const sendMessage = (payload: MessagePayload) => {
+    console.log("Message received");
+    const gameUser = prisma.gameUsers.findFirst({
       where: {
         userId: socket.user.id,
         gameId: payload.gameId,
       },
     });
-    if (!userGame) return;
+    if (!gameUser) return;
     const strGameId = String(payload.gameId);
-    socket.to(strGameId).emit("game:deliver_message", payload);
+    io.to(strGameId).emit("game:deliver_message", payload);
+    console.log("Delivering message")
   };
 
-  const moveCharacter = async (socket: Socket, payload: MovePayload) => {
+  const moveCharacter = async (payload: MovePayload) => {
     const character = await Characters.detail({ id: payload.characterId });
     if (socket.user.id !== character.userid) return;
     await Characters.update(character.id, {
@@ -99,7 +101,7 @@ export default function registerGameHandlers(io: Server) {
       position_y: payload.position[1],
     });
     const roomId = String(payload.gameId);
-    socket.to(roomId).emit("game:character_moved", {
+    io.to(roomId).emit("game:character_moved", {
       characterId: payload.characterId,
       position: payload.position,
     });
@@ -113,9 +115,9 @@ export default function registerGameHandlers(io: Server) {
       next(new Error("Authentication failed."))
     }
   });
-  io.on("game:join", joinGame);
-  io.on("game:leave", leaveGame);
-  io.on("game:generate_next_layer", generateNextLayer);
-  io.on("game:move_character", moveCharacter);
-  io.on("game:send_message", sendMessage);
+  socket.on("game:join", joinGame);
+  socket.on("game:leave", leaveGame);
+  socket.on("game:generate_next_layer", generateNextLayer);
+  socket.on("game:move_character", moveCharacter);
+  socket.on("game:message", sendMessage);
 };

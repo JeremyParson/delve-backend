@@ -100,10 +100,6 @@ describe("Lobby handler", () => {
   });
 
   it("starts a game", (done) => {
-    socket.on("lobby:user_left", async () => {
-      console.log("HUH");
-    });
-
     socket.on("lobby:game_starting", async (payload) => {
       console.log("Game started");
       const gameUser = await GameUser.detail({

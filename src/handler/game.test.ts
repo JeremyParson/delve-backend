@@ -8,7 +8,6 @@ import GameUsers from "../data/game users";
 import Characters from "../data/characters";
 
 describe("Game handler", () => {
-
   const ioServer = setupIO(app);
   const expressServer = app.listen(process.env.PORT);
   ioServer.listen(Number(process.env.IO_PORT));
@@ -34,87 +33,96 @@ describe("Game handler", () => {
           token,
         },
       });
-      socket.on("connect", () => done());
+      socket.on("connect", done);
     } catch (e) {
       throw Error("Could not connect to server.");
     }
   });
 
-  it("joins a game", async () => {
+  it("joins a game", (done) => {
     socket.on("game:user_joined", async () => {
+      console.log("A user joined")
       const gameUser = await GameUsers.detail({
-        userId: user.id,
         gameId: game.id,
       });
       expect(gameUser).toBeTruthy();
       await GameUsers.delete(gameUser.id);
+      done();
     });
 
     socket.emit("game:join", {
-      userId: user.id,
       gameId: game.id,
     });
   });
 
-  it("leaves a game", async () => {
+  it("leaves a game", (done) => {
 
     socket.on("game:user_joined", async () => {
       socket.emit("game:leave", {
-        userId: user.id,
         gameId: game.id,
       });
     });
 
     socket.on("game:user_left", async () => {
       const gameUser = await GameUsers.detail({
-        userId: user.id,
         gameId: game.id,
       });
       expect(gameUser).toBeFalsy();
+      done();
     });
 
     socket.emit("game:join", {
-      userId: user.id,
       gameId: game.id,
     });
   });
 
-  it("sends a message", async () => {
+  it("sends a message", (done) => {
     socket.on("deliver_message", (payload) => {
       expect(payload.message).toBe("Hello World");
+      done();
     });
 
     socket.on("game:user_joined", async () => {
       socket.emit("game:message", {
-        userId: user.id,
         gameId: game.id,
         message: "Hello World",
       });
     });
 
+    socket.on("game:deliver_message", (payload) => {
+      expect(payload.message).toBe("Hello World");
+      done();
+    })
+
     socket.emit("game:join", {
-      userId: user.id,
       gameId: game.id,
     });
   });
 
-  it("moves a characters", async () => {
-    const user = await Users.detail();
-    let character = await Characters.create({
-      users: {
-        connect: { id: user.id },
-      },
+  it("moves a characters", (done) => {
+    socket.on("game:user_joined", async () => {
+      const character = await Characters.create({
+        users: {
+          connect: { id: user.id },
+        },
+      })
+      socket.emit("game:move_character", {
+        characterId: character.id,
+        position: [1, 2],
+        gameId: game.id,
+      });
     });
-    socket.on("game:actor_moved", async (payload) => {
-      character = await Characters.detail({ id: character.id });
+
+    socket.on("game:character_moved", async (payload) => {
+      const character = await Characters.detail({ id: payload.characterId });
       expect(character.position_x).toBe(1);
       expect(character.position_y).toBe(2);
       await Characters.delete(character.id);
+      done();
     });
-    socket.emit("game:move_character", {
-      userId: user.id,
-      characterId: 1,
-      position: [1, 2],
+
+    socket.emit("game:join", {
+      gameId: game.id,
     });
   });
 

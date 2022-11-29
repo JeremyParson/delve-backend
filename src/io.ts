@@ -17,7 +17,7 @@ export default function (app: Application): Server<DefaultEventsMap, DefaultEven
   registerUserHandler(io);
   io.on("connect", (socket) => {
     registerLobbyHandlers(io, socket);
+    registerGameHandlers(io, socket);
   });
-  // registerGameHandlers(io);
   return io;
 }
